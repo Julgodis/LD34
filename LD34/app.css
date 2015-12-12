@@ -1,0 +1,28 @@
+﻿body {
+    font-family: 'Consolas';
+    background-color: #AAA;
+    margin: 20px 0 0 0;
+    padding: 0px;
+}
+
+span {
+    font-style: italic;
+}
+
+#glCanvas {
+    width: 900px;
+    height: 600px;
+    background-color: #000;
+    margin: 0 auto;
+    display: block;
+}
+
+image, canvas {
+    user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+}
