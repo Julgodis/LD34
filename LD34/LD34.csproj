@@ -40,10 +40,18 @@
     <TypeScriptCompile Include="engine\vec3.ts" />
     <TypeScriptCompile Include="engine\vec4.ts" />
     <TypeScriptCompile Include="engine\webgl.ts" />
+    <TypeScriptCompile Include="game\animation.ts" />
     <TypeScriptCompile Include="game\bot.ts" />
+    <TypeScriptCompile Include="game\button.ts" />
     <TypeScriptCompile Include="game\gameobject.ts" />
+    <TypeScriptCompile Include="game\hp.ts" />
     <TypeScriptCompile Include="game\particle_system.ts" />
     <TypeScriptCompile Include="game\player.ts" />
+    <TypeScriptCompile Include="game\scene.ts" />
+    <TypeScriptCompile Include="game\scenes\intro_scene.ts" />
+    <TypeScriptCompile Include="game\scenes\match_scene.ts" />
+    <TypeScriptCompile Include="game\scenes\tutorial_scene.ts" />
+    <TypeScriptCompile Include="game\text.ts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="web.Debug.config">

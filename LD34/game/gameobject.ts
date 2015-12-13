@@ -11,6 +11,7 @@
     onGround: boolean = false;
     angleGravity: number;
     fixedAngle: number;
+    height_to_ground: number;
     sprite: Sprite;
 
     remove: boolean;
@@ -25,6 +26,7 @@
         this.fixedAngle = 1;
         this.offset = new vec2([0, 0]);
         this.remove = false;
+        this.height_to_ground = this.size.y;
     }
 
     get min(): vec2 {
@@ -37,4 +39,6 @@
     get max(): vec2 {
         return this.min.add(this.size);
     }
+
+
 } 

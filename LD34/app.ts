@@ -4,7 +4,7 @@
  TODO:
 
 * Particles
-* Disable the current combo
+* display the current combo
 * Blood
 
 
@@ -19,17 +19,20 @@ var renderHandle: number;
 var state: number = 0;
 var todoTime: number = 6;
 
-var updateDt: number = 1.0 / 60.0;
-var renderDt: number = 1.0 / 120.0;
+var update_time: number = 1.0 / 60.0;
+var render_time: number = 1.0 / 120.0;
 
 var elapsedTime = 0;
 var frameCount = 0;
 var lastTime = 0;
 var fps = 0;
+var fps_counter = 0;
 
 var time = 0;
 var mpp = 100.0;
 var ppm = 1.0 / mpp;
+
+var empty_texture: Texture;
 
 interface StartData {
     shaders: { [id: string]: ShaderResource }
@@ -60,8 +63,42 @@ window.onload = () => {
     data.textures["hej"] = Loader.ReadTextureResource("assets/textures/cat4.png", { pixelate: true });
     data.textures["particle"] = Loader.ReadTextureResource("assets/textures/particle.png", { pixelate: true });
 
+    data.textures["player_spritesheet"] = Loader.ReadTextureResource("assets/textures/player.png", { pixelate: true });
+    data.textures["john_cena_spritesheet"] = Loader.ReadTextureResource("assets/textures/john_cena.png", { pixelate: true });
+    data.textures["tutorial_spritesheet"] = Loader.ReadTextureResource("assets/textures/tutorial_box.png", { pixelate: true });
+
+    data.textures["ground_texture_1"] = Loader.ReadTextureResource("assets/textures/ground_texture_1.png", { pixelate: true, repeat_x: true, repeat_y: true });
+
+    data.textures["tree1"] = Loader.ReadTextureResource("assets/textures/tree_spritesheet1.png", { pixelate: true });
+    data.textures["tree2"] = Loader.ReadTextureResource("assets/textures/tree_spritesheet2.png", { pixelate: true });
+
+    data.textures["background_1"] = Loader.ReadTextureResource("assets/textures/background_1.png", { pixelate: true });
+    data.textures["sky"] = Loader.ReadTextureResource("assets/textures/sky.png", { pixelate: true });
+
+    data.textures["a_button"] = Loader.ReadTextureResource("assets/textures/a_button.png", { pixelate: true });
+    data.textures["b_button"] = Loader.ReadTextureResource("assets/textures/b_button.png", { pixelate: true });
+
+    data.textures["a_button_combo"] = Loader.ReadTextureResource("assets/textures/a_button_combo.png", { pixelate: true });
+    data.textures["b_button_combo"] = Loader.ReadTextureResource("assets/textures/b_button_combo.png", { pixelate: true });
+
+    data.textures["a_button_combo_up"] = Loader.ReadTextureResource("assets/textures/a_button_combo_up.png", { pixelate: true });
+    data.textures["a_button_combo_down"] = Loader.ReadTextureResource("assets/textures/a_button_combo_down.png", { pixelate: true });
+    data.textures["b_button_combo_up"] = Loader.ReadTextureResource("assets/textures/b_button_combo_up.png", { pixelate: true });
+    data.textures["b_button_combo_down"] = Loader.ReadTextureResource("assets/textures/b_button_combo_down.png", { pixelate: true });
 
 
+    data.textures["jump_combo"] = Loader.ReadTextureResource("assets/textures/jump_combo.png", { pixelate: true });
+    data.textures["fist_combo"] = Loader.ReadTextureResource("assets/textures/fist_combo.png", { pixelate: true });
+    data.textures["arrow"] = Loader.ReadTextureResource("assets/textures/arrow.png", { pixelate: true });
+
+
+    data.textures["menu"] = Loader.ReadTextureResource("assets/textures/menu.png", { pixelate: true });
+    data.textures["button"] = Loader.ReadTextureResource("assets/textures/button.png", { pixelate: true });
+
+    data.music["music"] = Loader.ReadMusicResource("assets/music/LD34.ogg", { loop: true });
+    data.sounds["combo"] = Loader.ReadSoundResource("assets/music/combo.ogg", 6);
+    data.sounds["hurt"] = Loader.ReadSoundResource("assets/music/hurt.ogg", 10);
+    data.sounds["select"] = Loader.ReadSoundResource("assets/music/select.ogg", 10);
 
     //
 
@@ -109,17 +146,39 @@ window.onload = () => {
     }, 1 / 60);
 };
 
-class Test {
+function setup_blood_emitter() {
+    var pf = new ParticleEmitter(context.passes[0], new vec2([20, 20]));
+    pf.position = new vec2([450 * ppm, 300 * ppm]);
+    pf.relative_position = new vec2([0, 0]);
+    pf.relative_random_position = new vec2([0.1, 0.1]);
 
-    position: vec2;
-    sprite: Sprite;
+    pf.velocity = new vec2([0.0, 0.0]);
+    pf.random_velocity = new vec2([2.0, 2.0]);
 
-    constructor() {
-        this.position = new vec2([0, 0]);
-    }
+    pf.color1 = new vec4([0.8, 0.2, 0.2, 1]);
+    pf.color2 = new vec4([0.9, 0.1, 0.1, 0]);
+    pf.random_color1 = new vec4([0.1, 0.1, 0.1, 0]);
+    pf.random_color2 = new vec4([0.05, 0.05, 0.05, 0]);
+
+    pf.rotation = Math.PI / 4;
+    pf.random_rotation = 1;
+    pf.rotation_velocity = 1;
+    pf.random_rotation_velocity = 1.0;
+
+    pf.scale = 0.3;
+    pf.random_scale = 0.05;
+    pf.scale_velocity = -0.2;
+    pf.random_scale_velocity = 0.1;
+    pf.on_ground = ((particle: Particle) => { particle.scale_velocity = 0; });
+
+    pf.lifetime = 5;
+    pf.spawn_max = 100;
+    pf.spawn_count = 0;
+    pf.spawn_rate = -1;
+    pf.textures = [data.textures["particle"].texture];
+
+    return pf;
 }
-
-var particle_test: ParticleEmitter;
 
 function start() {
     context = new WebGL("glCanvas", 900, 600, true);
@@ -134,224 +193,232 @@ function start() {
     for (var id in data.textures)
         context.addTexture(data.textures[id].texture);
 
+    data.sounds["combo"].sound.volume = 0.1;
+
     context.addPassBasic("pass1");
     context.passes[0].shader = data.shaders["basic"].shader;
 
+    //context.addPassBasic("GUI");
+    //context.passes[1].shader = data.shaders["basic"].shader;
+
+    empty_texture = data.textures["particle"].texture;
+
+    var baseMusic = data.music["music"].music;
+    baseMusic.volume = 0.1;
+    //baseMusic.play();
+
+   // var matchscene = new MatchScene();
+   // matchscene.match_id = MatchID.Level1;
+   // matchscene.setup();
+   // current_scene = matchscene;
+
+    var introscene = new IntroScene();
+    introscene.setup();
+    current_scene = introscene;
+
+
     {
-        var sprite = new Sprite(0, 0, 1.0, 20, 50);
-        sprite.color = new vec4([1.0, 1.0, 1.0, 1.0]);
-        sprite.textures = [data.textures["hej"].texture];
+        player_damage = new Sprite(0, 0, 999, 900, 600);
+        player_damage.color = new vec4([1, 0, 0, 0]);
+        player_damage.textures = [data.textures["particle"].texture];
+        player_damage.enabled = false;
 
-
-        player = new Player(new vec2([20 * ppm, 300 * ppm]), new vec2([20, 50]));
-        player.sprite = sprite;
-
-        context.passes[0].addSprite(sprite);
-        objects.push(player);
+        context.passes[0].addSprite(player_damage);
     }
 
     {
-        var sprite = new Sprite(0, 0, 1.0, 20, 50);
-        sprite.color = new vec4([0.5, 0.5, 1.0, 1.0]);
-        sprite.textures = [data.textures["hej"].texture];
+        fps_text = new TextSprite("FPS: " + fps, 5, 5, 1000, 100, 30, { center: false, font: "20px monospace"});
+        context.passes[0].addSprite(fps_text);
 
-
-        var bot = new Bot(new vec2([400 * ppm, 300 * ppm]), new vec2([20, 50]));
-        bot.sprite = sprite;
-
-        context.passes[0].addSprite(sprite);
-        objects.push(bot);
     }
 
-    {
-        particle_test = new ParticleEmitter(context.passes[0], new vec2([20, 20]));
-        particle_test.position = new vec2([450 * ppm, 300 * ppm]);
-        particle_test.relative_position = new vec2([0, 0]);
-        particle_test.relative_random_position = new vec2([0, 0]);
-
-        particle_test.velocity = new vec2([0.01, 0.01]);
-        particle_test.random_velocity = new vec2([1, 1]);
-
-        particle_test.color = new vec4([1, 1, 1, 1]);
-        particle_test.random_color = new vec4([0.5, 0.5, 0.5, 0]);
-
-        particle_test.lifetime = 1;
-        particle_test.spawn_max = 1000;
-        particle_test.spawn_count = 0;
-        particle_test.spawn_rate = -1;
-        particle_test.textures = [data.textures["particle"].texture];
-    }
-
-    updateHandle = setInterval(update, updateDt * 1000);
+    updateHandle = setInterval(update, update_time * 1000);
     requestAnimationFrame(render);
 
     lastTime = new Date().getTime();
 }
 
-enum ActionType {
-    None,
-    BeginWalk,
-    EndWalk,
-    Turn,
-    Jump,
-    Dash,
-    BasicPunch,
-    CirclePunch,
-    JumpPunch
-};
+function OpenInNewTabRate() {
+    window.location.href = "http://ludumdare.com/compo";
+}
 
-var objects: GameObject[] = [];
-var player: Player;
+var current_scene: Scene;
 
-var combos: [ActionType[], ActionType, number][] = [
-    [[ActionType.Turn, ActionType.Turn], ActionType.Jump, 0.5],
-    [[ActionType.BeginWalk, ActionType.EndWalk, ActionType.BeginWalk], ActionType.Dash, 0.5],
-    [[ActionType.BeginWalk, ActionType.EndWalk, ActionType.Turn], ActionType.BasicPunch, 0.3],
-    [[ActionType.BasicPunch, ActionType.BasicPunch], ActionType.CirclePunch, 0.5],
-    [[ActionType.Jump, ActionType.Jump, ActionType.Turn], ActionType.JumpPunch, 0.6],
-];
+var fps_text: TextSprite;
 
-var combo_data: [number, number][] = [
-    [-1, 0],
-    [-1, 0],
-    [-1, 0],
-    [-1, 0],
-    [-1, 0],
-];
+var player_damage: Sprite;
+var player_damage_time: number = 0;
+var player_damage_maxtime: number = 0.2;
 
-function resolve_combo_actions(action: ActionType): ActionType[] {
-    var combo_actions: ActionType[] = [];
-    for (var i = 0; i < combos.length; i++) {
-        var combo_ac = combos[i][0];
-        var combo_max_time = combos[i][2];
-        var combo_id = combo_data[i][0];
-        var combo_time = combo_data[i][1];
+var slowmo_value = 0.25;
+var base_gravity = (new vec2([0, 0.2])).div(update_time);
+var slow_gravity = base_gravity.copy().mul(slowmo_value);
+var gravity = base_gravity;
 
-        if ((combo_id == -1 || time - combo_time > combo_max_time) && action == combo_ac[0]) {
-            console.log("begin : " + ActionType[combos[i][1]])
-            combo_data[i] = [1, time];
-        } else if (combo_id != -1) {
-            if (time - combo_time > combo_max_time) { // Out of time
-                console.log("exit  : " + ActionType[combos[i][1]])
-                combo_data[i] = [-1, 0];
-            } else if (action == combo_ac[combo_id]) {
-                console.log("update: " + ActionType[combos[i][1]])
+var world = new vec4([10 * ppm, 10 * ppm, 890 * ppm, 520 * ppm]);
+var camera_position = new vec2([0, 0]);
+var camera_zoom = 1.0;
 
-                combo_data[i] = [combo_id + 1, combo_time + combo_max_time];
-                if (combo_id + 1 >= combo_ac.length) {
-                    console.log("do    : " + ActionType[combos[i][1]])
 
-                    combo_actions.push(combos[i][1]);
-                    combo_data[i] = [-1, 0];
-                }
-            }
-        }
-    }
-
-    return combo_actions;
+var slowmo: boolean = false;
+function slow_motion(e: boolean) {
+    slowmo = e;
+   // if (slowmo) gravity = slow_gravity;
+    //else gravity = base_gravity;
 }
 
 function update() {
     keyboard.update();
-    time += updateDt;
 
-    var action_queue: ActionType[] = [];
-    if (keyboard.press(39)) {
-        action_queue.push(ActionType.BeginWalk);
-    } else if (keyboard.release(39)) {
-        action_queue.push(ActionType.EndWalk);
+    var delta = update_time;
+    if (slowmo)
+        delta = update_time * slowmo_value;
+
+    time += delta;
+
+    if (player_damage_time > 0) {
+        player_damage.enabled = true;
+        player_damage.color.a = ((player_damage_time - 0.2 / player_damage_maxtime) / player_damage_maxtime);
+        player_damage_time -= update_time;
+    } else {
+        player_damage.enabled = false;
+        player_damage.color.a = 0;
     }
 
-    if (keyboard.press(32)) {
-        action_queue.push(ActionType.Turn);
-    }
+    current_scene.update(time, delta);
 
-    if (action_queue.length > 0) {
-        var action = action_queue[action_queue.length - 1];
+    /*
 
-        var new_ca: ActionType[] = [];
-        var combo_actions = resolve_combo_actions(action);
-        //new_ca = combo_actions;
-        for (var index in combo_actions) {
-            var caction = combo_actions[index];
-            var ca = resolve_combo_actions(caction);
-
-            if (ca.length > 0) {
-                for (var i in ca)
-                    new_ca.push(ca[i]);
-            } else
-                new_ca.push(caction);
+    if (gamestate == GameState.Match) {
+        var action_queue: ActionType[] = [];
+        if (keyboard.press(39)) {
+            action_queue.push(ActionType.BeginWalk);
+        } else if (keyboard.release(39)) {
+            action_queue.push(ActionType.EndWalk);
         }
 
-        for (var index in new_ca) {
-            action_queue.push(new_ca[index]);
+        if (keyboard.press(32)) {
+            action_queue.push(ActionType.Turn);
         }
-    }
 
-    for (var index in action_queue) {
-        var action = action_queue[index];
-        if (action != ActionType.None) {
-            if (action == ActionType.BeginWalk)
-                player.moving = 1;
-            else if (action == ActionType.EndWalk)
-                player.moving = 0;
-            else if (action == ActionType.Dash) {
-                player.velocity.x += 5800 * player.moveDirection;
-                player.velocity.y -= 0.5;
+        if (action_queue.length > 0) {
+            var action = action_queue[action_queue.length - 1];
+
+            var new_ca: ActionType[] = [];
+            var combo_actions = resolve_combo_actions(action);
+            //new_ca = combo_actions;
+            for (var index in combo_actions) {
+                var caction = combo_actions[index];
+                var ca = resolve_combo_actions(caction);
+
+                if (ca.length > 0) {
+                    for (var i in ca)
+                        new_ca.push(ca[i]);
+                } else
+                    new_ca.push(caction);
             }
-            else if (action == ActionType.JumpPunch) {
-                player.velocity.y += 40;
-                player.jump_punch = true;
-            } else if (action == ActionType.Turn)
-                player.moveDirection *= -1;
-            else if (action == ActionType.Jump) {
-                player.velocity.y -= 5 + (player.onGround ? 0 : 2);
-            } else if (action == ActionType.BasicPunch) {
-                player.moveDirection *= -1;
 
-                console.log("B Punch")
-                for (var id in objects) {
-                    var obj = objects[id];
+            for (var index in new_ca) {
+                action_queue.push(new_ca[index]);
+            }
+        }
 
-                    if (obj.isStatic || obj instanceof Player)
-                        continue;
+        for (var index in action_queue) {
+            var action = action_queue[index];
+            if (action != ActionType.None) {
+                if (action == ActionType.BeginWalk)
+                    player.moving = 1;
+                else if (action == ActionType.EndWalk)
+                    player.moving = 0;
+                else if (action == ActionType.Dash) {
+                    player.velocity.x += 5800 * player.moveDirection;
+                    player.velocity.y -= 0.5;
+                }
+                else if (action == ActionType.JumpPunch) {
+                    player.velocity.y += 40;
+                    player.jump_punch = true;
+                } else if (action == ActionType.Turn)
+                    player.moveDirection *= -1;
+                else if (action == ActionType.Jump) {
+                    player.jump_count++;
+                    player.velocity.y -= 5 + (player.onGround ? 0 : 2);
+                } else if (action == ActionType.BasicPunch) {
+                    player.moveDirection *= -1;
 
-                    var dx = obj.position.x - player.position.x;
-                    var dy = obj.position.y - player.position.y;
-                    var dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist <= (player.size.x * 0.5) * ppm || (dx * player.moveDirection > 0 && dist <= (player.size.x * 1.5) * ppm)) {
-                        var angle = Math.tan(dy / dx);
+                    console.log("B Punch")
+                    for (var id in objects) {
+                        var obj = objects[id];
 
-                        var strength = 5 * (angle/4 + 1);
-                        var punch_velocity = new vec2([player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
-                        punch_velocity.mul(strength);
+                        if (obj.remove || obj.isStatic || obj instanceof Player)
+                            continue;
 
-                        obj.velocity.add(punch_velocity);
+                        var dx = obj.position.x - player.position.x;
+                        var dy = obj.position.y - player.position.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist <= (player.size.x * 0.5) * ppm || (dx * player.moveDirection > 0 && dist <= (player.size.x * 1.5) * ppm)) {
+                            var angle = Math.tan(dy / dx);
+
+                            var strength = 5 * (angle / 4 + 1);
+                            var punch_velocity = new vec2([player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
+                            punch_velocity.mul(strength);
+                            obj.velocity.add(punch_velocity);
+
+                            var pe: ParticleEmitter = null;
+                            if (obj instanceof Bot) {
+                                pe = (<Bot>obj).blood_system;
+                                (<Bot>obj).attacked(player.bpunch_damage());
+
+                                pe.velocity = new vec2([player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
+                                pe.spawn_max = 30;
+                                pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
+                                pe.spawn(time);
+                            }
+                        }
+                    }
+                } else if (action == ActionType.CirclePunch) {
+                    player.moveDirection *= -1;
+                    player.velocity.y += 5;
+
+                    console.log("C Punch")
+                    for (var id in objects) {
+                        var obj = objects[id];
+
+                        if (obj.remove || obj.isStatic || obj instanceof Player)
+                            continue;
+
+                        var dx = obj.position.x - player.position.x;
+                        var dy = obj.position.y - player.position.y;
+                        var dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist <= (player.size.x * 10) * ppm) {
+                            var dt = dist / (player.size.x * 10 * ppm);
+                            var angle = Math.atan2(-dy, dx);
+                            var punch_velocity = new vec2([(16000 + dt * 10000) * Math.cos(angle), -20 * Math.sin(angle)]);
+                            obj.velocity.add(punch_velocity);
+
+                            player_attack_particle.velocity = new vec2([0, 0]);
+                            player_attack_particle.random_velocity = new vec2([10, 10]);
+                            player_attack_particle.position = player.position.copy().add(player.size.copy().mul(0.5 * ppm));
+                            player_attack_particle.relative_random_position = player.size.copy().mul(0.5 * ppm);
+                            player_attack_particle.spawn_max = 200;
+                            player_attack_particle.lifetime = 0.4;
+                            player_attack_particle.spawn(time);
+
+                            var pe: ParticleEmitter = null;
+                            if (obj instanceof Bot) {
+                                pe = (<Bot>obj).blood_system;
+                                (<Bot>obj).attacked(player.cpunch_damage());
+
+                                pe.velocity = new vec2([Math.cos(angle), -Math.sin(Math.PI / 4)]);
+                                pe.spawn_max = 10;
+                                pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
+                                pe.spawn(time);
+                            }
+                        }
                     }
                 }
-            } else if (action == ActionType.CirclePunch) {
-                player.moveDirection *= -1;
-                player.velocity.y += 5;
 
-                console.log("C Punch")
-                for (var id in objects) {
-                    var obj = objects[id];
 
-                    if (obj.isStatic || obj instanceof Player)
-                        continue;
-
-                    var dx = obj.position.x - player.position.x;
-                    var dy = obj.position.y - player.position.y;
-                    var dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist <= (player.size.x * 6) * ppm) {
-                        var angle = Math.atan2(-dy, dx);
-                        var punch_velocity = new vec2([-500 * Math.cos(angle), -Math.sin(Math.PI / 4)]); 
-                        obj.velocity.add(punch_velocity);
-                    }
-                }
             }
-               
-            
         }
     }
 
@@ -359,17 +426,46 @@ function update() {
 
     var gravity = new vec2([0, 0.2]);
 
-    particle_test.spawn(time);
-    particle_test.update(updateDt, new vec2([0, 0]));
+    for (var index in repeats) {
+        var rep = repeats[index];
+        if (rep.times == 0) return;
+
+        if (time >= rep.last_time) {
+            rep.func(rep.times, rep.data);
+            rep.last_time = time + rep.interval;
+            rep.times--;
+        }
+    }
+
+    repeats = repeats.filter(
+        (value: Repeat, index: number, array: Repeat[]): boolean =>
+        {
+            return value.times != 0;
+        });
+
+    if (player_damage_time > 0) {
+        player_damage.enabled = true;
+        player_damage.color.a = ((player_damage_time - 0.2 / player_damage_maxtime) / player_damage_maxtime);
+        player_damage_time -= updateDt;
+    } else {
+        player_damage.enabled = false;
+        player_damage.color.a = 0;
+    }
+
+    ground_particle.update(time, updateDt, gravity, ppm);
+    player_attack_particle.update(time, updateDt, gravity, ppm);
 
     for (var id in objects) {
         var obj = objects[id];
 
-        if (!obj.isStatic) {
+        if (obj.remove || !obj.isStatic) {
             
             obj.velocity.add(gravity);
             if (obj instanceof Player) {
                 var pl = <Player>obj;
+
+                pl.hp.update(updateDt);
+                pl.blood_system.update(time, updateDt, gravity, ppm);
 
                 var walking_velocity = new vec2([1, 0]);
                 walking_velocity.mul(pl.speed);
@@ -377,14 +473,43 @@ function update() {
                 walking_velocity.mul(pl.moveDirection);
                 //walking_velocity.mul(ppm);
 
-                pl.velocity.add(walking_velocity);
-                obj.sprite.flip = (pl.moveDirection == -1);
+                pl.cc -= updateDt;
+                if (pl.cc <= 0) {
+                    pl.velocity.add(walking_velocity);
+                    obj.sprite.flip = (pl.moveDirection == -1);
+                }
 
                 if (obj.onGround && pl.jump_punch) {
+                    player.moveDirection *= -1;
+
+                    var data = [
+                        new vec2([0, -3.5]),
+                        obj.position.copy().add(new vec2([obj.size.x * 0.5 * ppm, obj.size.y * ppm - 10 * ppm])),
+                        new vec2([(player.size.x * 4) * ppm, 0])
+                    ];
+
+                    repate_function(data, (i, data) => {
+                        player_attack_particle.lifetime = 0.5;
+                        player_attack_particle.random_velocity = new vec2([0, 0]);
+                        player_attack_particle.velocity = <vec2>data[0];
+                        player_attack_particle.velocity.add(new vec2([0.2 * (Math.random() - 0.5), -(Math.random() - 0.5) * 1]));
+                        player_attack_particle.position = <vec2>data[1];
+                        player_attack_particle.relative_random_position = <vec2>data[2];
+                        player_attack_particle.spawn_max = 8;
+                        player_attack_particle.spawn(time);
+
+                        player_attack_particle.velocity = new vec2([0, 0]);
+                        player_attack_particle.position = <vec2>data[1];
+                        player_attack_particle.relative_random_position = <vec2>data[2];
+                        player_attack_particle.spawn_max = 8;
+                        player_attack_particle.spawn(time);
+
+                    }, 10, 0)
+
                     for (var id in objects) {
                         var obj = objects[id];
 
-                        if (obj.isStatic || obj instanceof Player)
+                        if (obj.isStatic || obj instanceof Player || !obj.onGround)
                             continue;
 
                         var dx = obj.position.x - player.position.x;
@@ -393,16 +518,50 @@ function update() {
                         if (dist <= (player.size.x * 4) * ppm) {
                             var punch_velocity = new vec2([0, -8]);
                             obj.velocity.add(punch_velocity);
+
+                            var pe: ParticleEmitter = null;
+                            if (obj instanceof Bot) {
+                                pe = (<Bot>obj).blood_system;
+                                (<Bot>obj).attacked(player.jpunch_damage());
+
+                                pe.velocity = new vec2([0, -5]);
+                                pe.spawn_max = 15;
+                                pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
+                                pe.spawn(time);
+                            }
                         }
                     }
 
                     pl.jump_punch = false;
                 }
+
             
             } else if (obj instanceof Bot) {
                 var bot = <Bot>obj;
+                bot.blood_system.update(time, updateDt, gravity, ppm);
+                if (gamestate == GameState.Match) {
+                    bot.hp.update(updateDt);
+                    bot.update(time, updateDt, player);
+                }
 
- 
+                if (gamestate == GameState.Match) {
+
+                }
+
+                if (bot.hp.current_hp <= 0) {
+                    if (gamestate == GameState.Match) {
+                        gamestate = GameState.Won;
+
+                        bot.hp.hide();
+                    }
+
+                    var pe = bot.blood_system;
+                    pe.velocity = new vec2([0, -5]);
+                    pe.spawn_max = 2;
+                    pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
+                    pe.spawn(time);
+                }
+
                 obj.sprite.flip = (bot.moveDirection == -1);
             }
 
@@ -411,6 +570,8 @@ function update() {
             else
                 obj.velocity.x *= 0.99;
 
+
+            var prev_ground = obj.onGround;
             obj.onGround = false;
 
 
@@ -427,14 +588,22 @@ function update() {
                 obj.position.y = (550 - obj.size.y) * ppm;
                 obj.velocity.y = 0;//-1 * 0.1;
                 obj.onGround = true;
+
+                if (obj.onGround && !prev_ground) {
+                    ground_particle.velocity = (new vec2([0, -3])).add(obj.velocity.copy().mul(-1*0.1));
+                    ground_particle.position = obj.position.copy().add(new vec2([obj.size.x * 0.5 * ppm, obj.size.y * ppm]));
+                    ground_particle.relative_random_position = new vec2([obj.size.x * ppm * 0.5, 0]);
+                    ground_particle.spawn_max = 10;
+                    ground_particle.spawn(time);
+                }
             }
 
             if (obj.position.x < 0 * ppm) {
                 obj.position.x = 0 * ppm;
-                obj.velocity.x *= -1 * 0.1;
+                obj.velocity.x *= -1 * 0.8;
             } else if (obj.position.x > (900 - obj.size.x) * ppm) {
                 obj.position.x = (900 - obj.size.x) * ppm;
-                obj.velocity.x *= -1 * 0.1;
+                obj.velocity.x *= -1 * 0.8;
             }
 
             var matrix = mat3.makeIdentity();
@@ -442,10 +611,24 @@ function update() {
             obj.sprite.matrix = matrix;
         }
 
-        if (obj.remove && obj.sprite != null) {
-            context.passes[0].removeSprite(obj.sprite);
+        if (obj.remove) {
+            if (obj.sprite != null) {
+                context.passes[0].removeSprite(obj.sprite);
+            }
+
+            if (obj instanceof Bot) {
+                var bot = <Bot>obj;
+                context.passes[0].removeSprite(bot.hp.base_sprite);
+                context.passes[0].removeSprite(bot.hp.current_sprite);
+                context.passes[0].removeSprite(bot.hp.update_sprite);
+            }
         }
     }
+
+    objects = objects.filter(
+        (value: GameObject, index: number, array: GameObject[]) =>
+            !value.remove);
+    */
 }
 
 function render() {
@@ -456,15 +639,24 @@ function render() {
     elapsedTime += elapsed;
     lastTime = now;
 
+    fps_text.data = "FPS: " + fps;
+    fps_text.update();
+
     context.preRender();
-    context.render(mat3.makeIdentity());
-    //context.render(mat3.makeTranslate(-(camera.x) / worldBound.x, (camera.y) / worldBound.y));//-camera.x * mpp / worldBound.x, camera.y * mpp / worldBound.y));
+    //context.render(mat3.makeIdentity());
+
+    var matrix = mat3.makeIdentity();
+    matrix.multiply(mat3.makeScale(camera_zoom, camera_zoom));
+    matrix.multiply(mat3.makeTranslate(-(camera_position.x) / 900, (camera_position.y) / 600));
+
+    context.render(matrix);//-camera.x * mpp / worldBound.x, camera.y * mpp / worldBound.y));
 
     context.postRender();
-    fps++;
+    fps_counter++;
 
     if (elapsedTime >= 1000) {
-        fps = 0;
+        fps = fps_counter;
+        fps_counter = 0;
         elapsedTime -= 1000;
     }
 

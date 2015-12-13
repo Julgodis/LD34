@@ -9,7 +9,7 @@ span {
     font-style: italic;
 }
 
-#glCanvas {
+canvas {
     width: 900px;
     height: 600px;
     background-color: #000;

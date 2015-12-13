@@ -1,14 +1,13 @@
 ﻿
 class Texture {
-
     context: WebGL
-    image: HTMLImageElement;
+    image: any;
     handle: WebGLTexture;
 
     mip: boolean;
     options: any;
 
-    constructor(image: HTMLImageElement, mip: boolean = true, options: any = null) {
+    constructor(image: any, mip: boolean = true, options: any = null) {
         this.image = image;
         this.mip = mip;
         this.options = options;
@@ -59,6 +58,11 @@ class Texture {
         }
 
         gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+
+    free() {
+        var gl = this.context.glContext;
+        gl.deleteTexture(this.handle);
     }
 
     bind(index: number = 0) {

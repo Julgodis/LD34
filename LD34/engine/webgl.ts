@@ -5,6 +5,7 @@
 /// <reference path="shader.ts"/>
 
 class Sprite {
+    pass: Pass;
     guid: string;
     x: number;
     y: number;
@@ -39,6 +40,11 @@ class Sprite {
         this.shader = null;
         this.textures = [];
     }
+
+    remove() {
+        if (this.pass)
+            this.pass.removeSprite(this);
+    }
 }
 
 class Vertex {
@@ -66,7 +72,7 @@ class Vertex {
 class Pass {
 
     vertSize = 4;
-    size = 512;
+    size = 1024;
 
     numVerts = this.size * this.vertSize;
     numIndices = this.size * 6;
@@ -100,12 +106,14 @@ class Pass {
 
     verts: Array<Vertex>;
     last: Sprite[];
+    removes: string[];
 
     constructor(name: string) {
         this.name = name;
         this.sprites = {};
         this.shader = null;
         this.texture = null;
+        this.removes = [];
     }
 
     initialize(context: WebGL) {
@@ -162,19 +170,25 @@ class Pass {
             id = this.guid();
         }
 
+        sprite.pass = this;
         sprite.guid = id;
-        console.log("add: " + sprite.guid);
+        //console.log("add (" + Object.keys(this.sprites).length + "): " + sprite.guid);
 
         this.sprites[id] = sprite;
+        this.sprites[id].pass = this;
     }
 
     removeSprite(sprite: Sprite) {
-        //console.log("remove: " + sprite.guid);
-        delete this.sprites[sprite.guid];
+       // console.log("remove  (" + Object.keys(this.sprites).length + "): " + sprite.guid);
+        this.removes.push(sprite.guid);
     }
 
     update(context: WebGL, wireframe: boolean) {
 
+        for (var ix in this.removes) {
+            delete this.sprites[this.removes[ix]];
+        }
+        this.removes = [];
 
         var gl = context.glContext;
         var keys = Object.keys(this.sprites);

@@ -194,3 +194,16 @@ class vec4 {
         return this;
     }
 }   
+
+function lerp(a: number, b: number, t: number) {
+    return a + (b - a) * t;
+}
+
+function lerp_vec4(a: vec4, b: vec4, t: number): vec4 {
+    return new vec4([
+        lerp(a.x, b.x, t),
+        lerp(a.y, b.y, t),
+        lerp(a.z, b.z, t),
+        lerp(a.w, b.w, t)
+    ]);
+}
