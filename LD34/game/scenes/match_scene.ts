@@ -434,7 +434,7 @@ class MatchScene extends Scene {
         } else if (this.match_id == MatchID.Level1) {
             this.spawn_bot("Idiot", "tutorial_spritesheet", DummyBot);
         } else if (this.match_id == MatchID.Level2) {
-            this.spawn_bot("God", "john_cena_spritesheet", GodBot);
+            this.spawn_bot("God", "god_spritesheet", GodBot);
         } else if (this.match_id == MatchID.Level3) {
             this.spawn_bot("Chuck Norris", "chuck_norris_spritesheet", ChunkNorrisBot);
         } else if (this.match_id == MatchID.Level4) {
@@ -687,7 +687,7 @@ class MatchScene extends Scene {
             setTimeout(() => {
                 this.setup_menu();
 
-                this.lose_title = new TextSprite("You Lost!", 450 - 250*0.5, 180, 1001, 250, 60,
+                this.lose_title = new TextSprite("Game over", 450 - 250*0.5, 180, 1001, 250, 60,
                     {
                         font: "46px monospace"
                     });
@@ -836,7 +836,7 @@ class MatchScene extends Scene {
 
         if (this.match_state == MatchState.Lose) {
             if (!this.player.dead) {
-                this.player.height_to_ground = this.player.size.x * 1.4;
+                this.player.height_to_ground = this.player.size.x * 1.2;
                 this.player.dead = true;
             } else {
                 var rotation = this.player.sprite.rotation;
@@ -1088,7 +1088,12 @@ class MatchScene extends Scene {
                             var pe: ParticleEmitter = null;
                             if (obj instanceof Bot) {
                                 pe = (<Bot>obj).blood_system;
-                                (<Bot>obj).attacked(this.player.bpunch_damage());
+
+                                var dmg = this.player.bpunch_damage();
+                                if ((<Bot>obj).cc > 0)
+                                    dmg *= 2.0;
+
+                                (<Bot>obj).attacked(dmg);
 
                                 pe.velocity = new vec2([this.player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
                                 pe.spawn_max = 30;
@@ -1158,6 +1163,7 @@ class MatchScene extends Scene {
 
         this.player.cc -= delta;
         if (this.player.cc <= 0) {
+            this.player.cc = 0;
             this.player.velocity.add(walking_velocity);
             this.player.sprite.flip = (this.player.moveDirection == -1);
         }
@@ -1214,6 +1220,7 @@ class MatchScene extends Scene {
                     if (obj instanceof Bot) {
                         pe = (<Bot>obj).blood_system;
                         (<Bot>obj).attacked(this.player.jpunch_damage());
+                        (<Bot>obj).cc += 3;
 
                         pe.velocity = new vec2([0, -5]);
                         pe.spawn_max = 15;
@@ -1282,7 +1289,7 @@ class MatchScene extends Scene {
                 dp.div(dp.length());
                 bot.velocity.sub(dp.mul(2));
 
-                bot.height_to_ground = bot.size.x * 1.4;
+                bot.height_to_ground = bot.size.x * 1.2;
                
                 this.opponents_dead++;
                 bot.dead = true;

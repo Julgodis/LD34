@@ -136,7 +136,7 @@ var IntroScene = (function (_super) {
             data.sounds["select"].sound.play();
             this.cleanup();
             var matchscene = new MatchScene();
-            matchscene.match_id = MatchID.Tutorial;
+            matchscene.match_id = MatchID.Level4;
             matchscene.setup();
             current_scene = matchscene;
             mouse.leftDown = false;

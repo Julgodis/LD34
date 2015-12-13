@@ -180,7 +180,7 @@ class IntroScene extends Scene {
 
            this.cleanup();
            var matchscene = new MatchScene();
-           matchscene.match_id = MatchID.Tutorial;
+           matchscene.match_id = MatchID.Level4;
            matchscene.setup();
            current_scene = matchscene;
 

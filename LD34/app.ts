@@ -60,10 +60,11 @@ window.onload = () => {
             }
         });
 
-    data.textures["hej"] = Loader.ReadTextureResource("assets/textures/cat4.png", { pixelate: true });
     data.textures["particle"] = Loader.ReadTextureResource("assets/textures/particle.png", { pixelate: true });
 
     data.textures["player_spritesheet"] = Loader.ReadTextureResource("assets/textures/player.png", { pixelate: true });
+    data.textures["god_spritesheet"] = Loader.ReadTextureResource("assets/textures/god.png", { pixelate: true });
+    data.textures["chuck_norris_spritesheet"] = Loader.ReadTextureResource("assets/textures/chuck_norris.png", { pixelate: true });
     data.textures["john_cena_spritesheet"] = Loader.ReadTextureResource("assets/textures/john_cena.png", { pixelate: true });
     data.textures["tutorial_spritesheet"] = Loader.ReadTextureResource("assets/textures/tutorial_box.png", { pixelate: true });
 

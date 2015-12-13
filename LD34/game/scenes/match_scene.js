@@ -350,7 +350,7 @@ var MatchScene = (function (_super) {
             this.spawn_bot("Idiot", "tutorial_spritesheet", DummyBot);
         }
         else if (this.match_id == MatchID.Level2) {
-            this.spawn_bot("God", "john_cena_spritesheet", GodBot);
+            this.spawn_bot("God", "god_spritesheet", GodBot);
         }
         else if (this.match_id == MatchID.Level3) {
             this.spawn_bot("Chuck Norris", "chuck_norris_spritesheet", ChunkNorrisBot);
@@ -570,7 +570,7 @@ var MatchScene = (function (_super) {
              }, 8500);*/
             setTimeout(function () {
                 _this.setup_menu();
-                _this.lose_title = new TextSprite("You Lost!", 450 - 250 * 0.5, 180, 1001, 250, 60, {
+                _this.lose_title = new TextSprite("Game over", 450 - 250 * 0.5, 180, 1001, 250, 60, {
                     font: "46px monospace"
                 });
                 _this.lose_rate = new ButtonSprite("Rate", 450 - 100, 280, 1001, 200, 50);
@@ -704,7 +704,7 @@ var MatchScene = (function (_super) {
         this.player.attack_particles.update(time, delta, gravity, ppm);
         if (this.match_state == MatchState.Lose) {
             if (!this.player.dead) {
-                this.player.height_to_ground = this.player.size.x * 1.4;
+                this.player.height_to_ground = this.player.size.x * 1.2;
                 this.player.dead = true;
             }
             else {
@@ -926,7 +926,10 @@ var MatchScene = (function (_super) {
                             var pe = null;
                             if (obj instanceof Bot) {
                                 pe = obj.blood_system;
-                                obj.attacked(this.player.bpunch_damage());
+                                var dmg = this.player.bpunch_damage();
+                                if (obj.cc > 0)
+                                    dmg *= 2.0;
+                                obj.attacked(dmg);
                                 pe.velocity = new vec2([this.player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
                                 pe.spawn_max = 30;
                                 pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
@@ -987,6 +990,7 @@ var MatchScene = (function (_super) {
         //walking_velocity.mul(ppm);
         this.player.cc -= delta;
         if (this.player.cc <= 0) {
+            this.player.cc = 0;
             this.player.velocity.add(walking_velocity);
             this.player.sprite.flip = (this.player.moveDirection == -1);
         }
@@ -1033,6 +1037,7 @@ var MatchScene = (function (_super) {
                     if (obj instanceof Bot) {
                         pe = obj.blood_system;
                         obj.attacked(this.player.jpunch_damage());
+                        obj.cc += 3;
                         pe.velocity = new vec2([0, -5]);
                         pe.spawn_max = 15;
                         pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
@@ -1094,7 +1099,7 @@ var MatchScene = (function (_super) {
                 var dp = this.player.position.copy().sub(bot.position);
                 dp.div(dp.length());
                 bot.velocity.sub(dp.mul(2));
-                bot.height_to_ground = bot.size.x * 1.4;
+                bot.height_to_ground = bot.size.x * 1.2;
                 this.opponents_dead++;
                 bot.dead = true;
                 this.last_dead = id;
