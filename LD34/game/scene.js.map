@@ -1,0 +1,1 @@
+{"version":3,"file":"scene.js","sourceRoot":"","sources":["scene.ts"],"names":["Scene","Scene.constructor","Scene.setup","Scene.update"],"mappings":"AAAA;IACIA;IAAgBC,CAACA;IAEjBD,qBAAKA,GAALA,cAAUE,CAACA;IACXF,sBAAMA,GAANA,UAAOA,IAAYA,EAAEA,KAAaA,IAAIG,CAACA;IAC3CH,YAACA;AAADA,CAACA,AALD,IAKC"}
