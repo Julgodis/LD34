@@ -163,6 +163,8 @@ class MatchScene extends Scene {
         for (var index in combos) {
             this.combo_sprites[index] = ([]);
 
+            combo_data[index][2] = 0;
+
             var combo_name = new TextSprite(combos[index][4], 10, start_y + index * (10 + 32 * cscale), 100, 100, 32, { center: false, font: "16px monospace" });
             context.passes[0].addSprite(combo_name);
             this.combo_text_sprites[index] = combo_name;
@@ -980,7 +982,10 @@ class MatchScene extends Scene {
         }
 
         for (var index in this.combo_cd_sprites) {
-            this.combo_cd_sprites[index].color.w = (combo_data[index][2] / combos[index][5]) * 0.5;
+            if (combo_data[index][2] > 0)
+                this.combo_cd_sprites[index].color.w = (combo_data[index][2] / combos[index][5]) * 0.5 + 0.3;
+            else
+                this.combo_cd_sprites[index].color.w = 0;
         }
 
         var off = new vec4([0.5, 0.5, 0.5, 0.5]);
@@ -1130,7 +1135,7 @@ class MatchScene extends Scene {
                         var dx = obj.position.x - this.player.position.x;
                         var dy = obj.position.y - this.player.position.y;
                         var dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist <= (this.player.size.x * 0.5) * ppm || (dx * this.player.moveDirection > 0 && dist <= (this.player.size.x * 1.5) * ppm)) {
+                        if (dist <= (this.player.size.x * 0.5) * ppm || (dx * this.player.moveDirection > 0 && dist <= (this.player.size.x * 1.0) * ppm)) {
                             var angle = Math.tan(dy / dx);
 
                             var strength = 5 * (angle / 4 + 1);

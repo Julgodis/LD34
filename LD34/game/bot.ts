@@ -332,13 +332,13 @@ class JohnCenaBot extends Bot {
     jump: number = 0;
     attack: number = 0;
 
-    basic_punch_damage: number = 7;
+    basic_punch_damage: number = 6.8;
     basic_punch_damage_random: number = 4;
 
     constructor(position: vec2, size: vec2) {
         super(position, size);
 
-        this.hp_start = 450;
+        this.hp_start = 410;
         this.speed = 23;
         this.setup_attack_particles(new vec4([1, 0, 1, 1]));
     }

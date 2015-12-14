@@ -29,7 +29,7 @@ var combos: [ActionType[], ActionType, number, ComboCheck, string, number][] = [
     [[ActionType.Turn, ActionType.Turn], ActionType.Jump, 0.5, combo_check_basic, "JUMP", 0],
     [[ActionType.BeginWalk, ActionType.BeginWalk, ActionType.BeginWalk], ActionType.Dash, 0.3, combo_check_basic, "DASH", 1],
     [[ActionType.BeginWalk, ActionType.Turn], ActionType.BasicPunch, 0.2, combo_check_basic, "FIST", 0],
-    [[ActionType.BasicPunch, ActionType.BasicPunch], ActionType.CirclePunch, 0.5, combo_check_basic, "ENERGY PUSH", 3],
+    [[ActionType.BasicPunch, ActionType.BasicPunch], ActionType.CirclePunch, 0.5, combo_check_basic, "ENERGY PUSH", 3.5],
     [[ActionType.Jump, ActionType.Jump, ActionType.Turn], ActionType.JumpPunch, 0.6, combo_check_jump, "CANNONBALL", 2],
 ];
 
@@ -145,14 +145,14 @@ class Player extends GameObject {
     }
 
     bpunch_damage(): number {
-        return 5 + (Math.random() - 0.5) * 2;
+        return 4;
     }
 
     cpunch_damage(): number {
-        return 10 + (Math.random() - 0.5) * 4;
+        return 7 + (Math.random() - 0.5) * 4;
     }
 
     jpunch_damage(): number {
-        return 8 + (Math.random() - 0.5) * 8;
+        return 7 + (Math.random() - 0.5) * 8;
     }
 }

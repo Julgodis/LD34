@@ -281,9 +281,9 @@ var JohnCenaBot = (function (_super) {
         this.dash = 0;
         this.jump = 0;
         this.attack = 0;
-        this.basic_punch_damage = 7;
+        this.basic_punch_damage = 6.8;
         this.basic_punch_damage_random = 4;
-        this.hp_start = 450;
+        this.hp_start = 410;
         this.speed = 23;
         this.setup_attack_particles(new vec4([1, 0, 1, 1]));
     }
