@@ -25,6 +25,7 @@
     <Content Include="app.css" />
     <Content Include="app_inline.css" />
     <Content Include="index.html" />
+    <Content Include="index_faster.html" />
     <Content Include="index_inline.html" />
     <Content Include="web.config" />
   </ItemGroup>
@@ -42,6 +43,7 @@
     <TypeScriptCompile Include="engine\vec3.ts" />
     <TypeScriptCompile Include="engine\vec4.ts" />
     <TypeScriptCompile Include="engine\webgl.ts" />
+    <TypeScriptCompile Include="faster.ts" />
     <TypeScriptCompile Include="game\animation.ts" />
     <TypeScriptCompile Include="game\bot.ts" />
     <TypeScriptCompile Include="game\button.ts" />
@@ -53,6 +55,7 @@
     <TypeScriptCompile Include="game\scenes\intro_scene.ts" />
     <TypeScriptCompile Include="game\scenes\match_scene.ts" />
     <TypeScriptCompile Include="game\text.ts" />
+    <TypeScriptCompile Include="normal.ts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="web.Debug.config">

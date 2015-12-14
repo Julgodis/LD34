@@ -173,7 +173,7 @@ function start() {
     lastTime = new Date().getTime();
 }
 function OpenInNewTabRate() {
-    window.location.href = "http://ludumdare.com/compo";
+    window.location.href = "http://ludumdare.com/compo/ludum-dare-34/?action=preview&uid=16119";
 }
 var current_scene;
 var fps_text;
