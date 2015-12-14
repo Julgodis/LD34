@@ -1,0 +1,1 @@
+﻿var particle_setting = 0.2;

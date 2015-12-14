@@ -182,7 +182,7 @@ class ParticleEmitter {
         if (this.spawn_max < 0 || this.spawn_rate < 0 || this.spawn_count < this.spawn_max) {
             if (this.spawn_rate == 0) return;
             if (this.spawn_rate < 0) {
-                for (var i = 0; i < this.spawn_max; i++) {
+                for (var i = 0; i < this.spawn_max * particle_setting; i++) {
                     this.spawn_particle(time, delta);
                 }
             } else {

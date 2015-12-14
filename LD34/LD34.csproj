@@ -23,7 +23,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="app.css" />
+    <Content Include="app_inline.css" />
     <Content Include="index.html" />
+    <Content Include="index_inline.html" />
     <Content Include="web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -50,7 +52,6 @@
     <TypeScriptCompile Include="game\scene.ts" />
     <TypeScriptCompile Include="game\scenes\intro_scene.ts" />
     <TypeScriptCompile Include="game\scenes\match_scene.ts" />
-    <TypeScriptCompile Include="game\scenes\tutorial_scene.ts" />
     <TypeScriptCompile Include="game\text.ts" />
   </ItemGroup>
   <ItemGroup>

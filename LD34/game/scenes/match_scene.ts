@@ -254,11 +254,14 @@ class MatchScene extends Scene {
         this.sky_sprite.textures = [data.textures["sky"].texture];
         context.passes[0].addSprite(this.sky_sprite);
 
-        for (var i = 0; i < 20; i++) {
-            this.add_tree(new vec2([(900 / 20) * i + (Math.random() - 0.5) * 100, world.w * mpp]), 10 + Math.random() * 5);
+        var tree_count = particle_setting * 20;
+        for (var i = 0; i < tree_count; i++) {
+            this.add_tree(new vec2([(900 / tree_count) * i + (Math.random() - 0.5) * 100, world.w * mpp]), 10 + Math.random() * 5);
         }
-        for (var i = 0; i < 15; i++) {
-            this.add_tree(new vec2([(900 / 15) * i + (Math.random() - 0.5) * 10, world.w * mpp]), 5 + Math.random() * 5);
+
+        tree_count = particle_setting * 15;
+        for (var i = 0; i < tree_count; i++) {
+            this.add_tree(new vec2([(900 / tree_count) * i + (Math.random() - 0.5) * 10, world.w * mpp]), 5 + Math.random() * 5);
         }
 
         this.a_button_sprite = new Sprite(10, 600 - 70, 100, 64, 64);
