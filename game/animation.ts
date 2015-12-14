@@ -79,7 +79,7 @@ class AnimationManager {
             this.coord_width * (animation.current_frame < 0 ? 0 : animation.current_frame),
             this.coord_height * animation.height_index,
             this.coord_width - 0.01,
-            this.coord_height]);
+            this.coord_height - 0.01]);
     }
 
     play(name: string): Animation {

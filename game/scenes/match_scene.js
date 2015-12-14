@@ -63,6 +63,7 @@ var MatchID;
     MatchID[MatchID["Level2"] = 2] = "Level2";
     MatchID[MatchID["Level3"] = 3] = "Level3";
     MatchID[MatchID["Level4"] = 4] = "Level4";
+    MatchID[MatchID["Level5"] = 5] = "Level5";
 })(MatchID || (MatchID = {}));
 var MatchScene = (function (_super) {
     __extends(MatchScene, _super);
@@ -94,6 +95,7 @@ var MatchScene = (function (_super) {
         var cscale = 1.0;
         for (var index in combos) {
             this.combo_sprites[index] = ([]);
+            combo_data[index][2] = 0;
             var combo_name = new TextSprite(combos[index][4], 10, start_y + index * (10 + 32 * cscale), 100, 100, 32, { center: false, font: "16px monospace" });
             context.passes[0].addSprite(combo_name);
             this.combo_text_sprites[index] = combo_name;
@@ -182,6 +184,13 @@ var MatchScene = (function (_super) {
         this.b_button_sprite.texCoords = new vec4([0, 0, 0.5, 1]);
         this.b_button_sprite.textures = [data.textures["b_button"].texture];
         context.passes[0].addSprite(this.b_button_sprite);
+        this.sound_sprite = new Sprite(820, 530, 1000, 64, 64);
+        if (Sound.isOff)
+            this.sound_sprite.texCoords = new vec4([0.5, 0, 0.5, 1.0]);
+        else
+            this.sound_sprite.texCoords = new vec4([0, 0, 0.5, 1.0]);
+        this.sound_sprite.textures = [data.textures["sound_button"].texture];
+        context.passes[0].addSprite(this.sound_sprite);
     };
     MatchScene.prototype.add_tree = function (position, scale) {
         var s = (scale - 10) / 10;
@@ -347,15 +356,18 @@ var MatchScene = (function (_super) {
             context.passes[0].addSprite(this.tut_text_jpunch);
         }
         else if (this.match_id == MatchID.Level1) {
-            this.spawn_bot("Idiot", "tutorial_spritesheet", DummyBot);
+            this.spawn_bot("Box Man", "tutorial_spritesheet", DummyBot);
         }
         else if (this.match_id == MatchID.Level2) {
-            this.spawn_bot("God", "john_cena_spritesheet", GodBot);
+            this.spawn_bot("Random Dude", "random_spritesheet", RandomBot);
         }
         else if (this.match_id == MatchID.Level3) {
-            this.spawn_bot("Chuck Norris", "chuck_norris_spritesheet", ChunkNorrisBot);
+            this.spawn_bot("God", "god_spritesheet", GodBot);
         }
         else if (this.match_id == MatchID.Level4) {
+            this.spawn_bot("Chuck Norris", "chuck_norris_spritesheet", ChunkNorrisBot);
+        }
+        else if (this.match_id == MatchID.Level5) {
             this.spawn_bot("John Cena", "john_cena_spritesheet", JohnCenaBot);
         }
     };
@@ -399,8 +411,10 @@ var MatchScene = (function (_super) {
             this.menu_board.remove();
         if (this.win_next_match != null)
             this.win_next_match.cleanup();
-        if (this.win_text != null)
-            this.win_text.remove();
+        if (this.win_text1 != null)
+            this.win_text1.remove();
+        if (this.win_text2 != null)
+            this.win_text2.remove();
         if (this.win_title != null)
             this.win_title.remove();
         if (this.lose_re_match != null)
@@ -420,6 +434,7 @@ var MatchScene = (function (_super) {
             this.tut_text_cpunch.remove();
             this.tut_text_jpunch.remove();
         }
+        this.sound_sprite.remove();
     };
     MatchScene.prototype.add_player = function (player) {
         this.player = player;
@@ -442,8 +457,31 @@ var MatchScene = (function (_super) {
     };
     MatchScene.prototype.update = function (time, delta) {
         var _this = this;
-        if (this.match_state == MatchState.Loading)
+        var sound_inside = true;
+        sound_inside = sound_inside && (mouse.position.x >= this.sound_sprite.x && mouse.position.x <= this.sound_sprite.x + this.sound_sprite.width);
+        sound_inside = sound_inside && (mouse.position.y >= this.sound_sprite.y && mouse.position.y <= this.sound_sprite.y + this.sound_sprite.height);
+        if (mouse.leftDown && sound_inside) {
+            if (Sound.isOff == false) {
+                Sound.Off();
+                Music.Off();
+                data.music["music"].music.stop();
+            }
+            else {
+                Sound.On();
+                Music.On();
+                data.music["music"].music.play();
+            }
+            data.sounds["select"].sound.play();
+            if (Sound.isOff)
+                this.sound_sprite.texCoords = new vec4([0.5, 0, 0.5, 1.0]);
+            else
+                this.sound_sprite.texCoords = new vec4([0, 0, 0.5, 1.0]);
+            mouse.leftDown = false;
+        }
+        if (this.match_state == MatchState.Loading) {
             this.match_state = MatchState.Inprogress;
+            this.match_start = new Date().getTime();
+        }
         for (var index in repeats) {
             var rep = repeats[index];
             if (rep.times == 0)
@@ -480,6 +518,11 @@ var MatchScene = (function (_super) {
             slow_motion(true);
             this.finish = true;
             this.camera_pos = this.player.position.copy().add(this.player.size.copy().mul(0.5 * ppm)).mul(mpp);
+            var t = ((new Date().getTime() - this.match_start) / 1000);
+            var time_bonus = 150 - (t * 10) / 2.5;
+            if (time_bonus < 0)
+                time_bonus = 0;
+            game_score += (1 + this.match_id / 10) * ((this.player.hp.current_hp / this.player.hp.max_hp) * 100 + this.opponents_dead * 50 + time_bonus);
             this.match_state = MatchState.Won;
             this.player.hp.hide();
             for (var index in this.opponents)
@@ -504,10 +547,18 @@ var MatchScene = (function (_super) {
             }
             setTimeout(function () {
                 _this.setup_menu();
-                _this.win_title = new TextSprite("You won!", 450 - 100, 180, 1001, 220, 60, {
+                _this.win_title = new TextSprite("Victory", 450 - 100, 150, 1001, 220, 60, {
                     font: "46px monospace"
                 });
-                if (_this.match_id == MatchID.Level4) {
+                if (_this.match_id == MatchID.Level5) {
+                    _this.win_text1 = new TextSprite("Thank you for playing.", 450 - 250 * 0.5, 220, 1001, 250, 50, {
+                        font: "16px monospace"
+                    });
+                    _this.win_text2 = new TextSprite("score: " + parseFloat("" + game_score).toFixed(2), 450 - 250 * 0.5, 240, 1001, 250, 50, {
+                        font: "16px monospace"
+                    });
+                    context.passes[0].addSprite(_this.win_text1);
+                    context.passes[0].addSprite(_this.win_text2);
                     _this.win_next_match = new ButtonSprite("Rate", 450 - 250 * 0.5, 350, 1001, 250, 50);
                 }
                 else {
@@ -551,29 +602,16 @@ var MatchScene = (function (_super) {
             for (var index in this.combo_cd_sprites) {
                 this.combo_cd_sprites[index].enabled = false;
             }
-            /* setTimeout(() => {
-                 this.setup_menu();
- 
-                 this.win_title = new TextSprite("You won!", 450 - 100, 150, 1001, 200, 60,
-                     {
-                         stroke: true,
-                         stroke_width: 1,
-                         font: "46px monospace"
-                     });
-                 this.win_next_match = new ButtonSprite("Next match", 450 - 100, 375, 1001, 200, 50);
-                 this.win_next_match.textures = [empty_texture];
-                 this.win_next_match.color = new vec4([0, 0, 1, 1]);
- 
-                 context.passes[0].addSprite(this.win_title);
-                 context.passes[0].addSprite(this.win_next_match);
-                 context.passes[0].addSprite(this.win_next_match.text);
-             }, 8500);*/
             setTimeout(function () {
                 _this.setup_menu();
-                _this.lose_title = new TextSprite("You Lost!", 450 - 250 * 0.5, 180, 1001, 250, 60, {
+                _this.lose_title = new TextSprite("Game over", 450 - 250 * 0.5, 150, 1001, 250, 60, {
                     font: "46px monospace"
                 });
-                _this.lose_rate = new ButtonSprite("Rate", 450 - 100, 280, 1001, 200, 50);
+                _this.lose_text = new TextSprite("score: " + parseFloat("" + game_score).toFixed(2), 450 - 250 * 0.5, 220, 1001, 250, 50, {
+                    font: "16px monospace"
+                });
+                context.passes[0].addSprite(_this.lose_text);
+                _this.lose_rate = new ButtonSprite("Rate", 450 - 100, 290, 1001, 200, 50);
                 _this.lose_rate.textures = [data.textures["button"].texture];
                 _this.lose_rate.color = new vec4([0, 0, 1, 1]);
                 _this.lose_re_match = new ButtonSprite("Re-fight", 450 - 100, 350, 1001, 200, 50);
@@ -704,7 +742,7 @@ var MatchScene = (function (_super) {
         this.player.attack_particles.update(time, delta, gravity, ppm);
         if (this.match_state == MatchState.Lose) {
             if (!this.player.dead) {
-                this.player.height_to_ground = this.player.size.x * 1.4;
+                this.player.height_to_ground = this.player.size.x * 1.3;
                 this.player.dead = true;
             }
             else {
@@ -787,7 +825,10 @@ var MatchScene = (function (_super) {
             }
         }
         for (var index in this.combo_cd_sprites) {
-            this.combo_cd_sprites[index].color.w = (combo_data[index][2] / combos[index][5]) * 0.5;
+            if (combo_data[index][2] > 0)
+                this.combo_cd_sprites[index].color.w = (combo_data[index][2] / combos[index][5]) * 0.5 + 0.3;
+            else
+                this.combo_cd_sprites[index].color.w = 0;
         }
         var off = new vec4([0.5, 0.5, 0.5, 0.5]);
         var on = new vec4([1.0, 1.0, 1.0, 1.0]);
@@ -917,7 +958,7 @@ var MatchScene = (function (_super) {
                         var dx = obj.position.x - this.player.position.x;
                         var dy = obj.position.y - this.player.position.y;
                         var dist = Math.sqrt(dx * dx + dy * dy);
-                        if (dist <= (this.player.size.x * 0.5) * ppm || (dx * this.player.moveDirection > 0 && dist <= (this.player.size.x * 1.5) * ppm)) {
+                        if (dist <= (this.player.size.x * 0.5) * ppm || (dx * this.player.moveDirection > 0 && dist <= (this.player.size.x * 1.0) * ppm)) {
                             var angle = Math.tan(dy / dx);
                             var strength = 5 * (angle / 4 + 1);
                             var punch_velocity = new vec2([this.player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
@@ -926,7 +967,10 @@ var MatchScene = (function (_super) {
                             var pe = null;
                             if (obj instanceof Bot) {
                                 pe = obj.blood_system;
-                                obj.attacked(this.player.bpunch_damage());
+                                var dmg = this.player.bpunch_damage();
+                                if (obj.cc > 0)
+                                    dmg *= 2.0;
+                                obj.attacked(dmg);
                                 pe.velocity = new vec2([this.player.moveDirection * Math.cos(Math.PI / 4), -Math.sin(angle + Math.PI / 4)]);
                                 pe.spawn_max = 30;
                                 pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
@@ -987,6 +1031,7 @@ var MatchScene = (function (_super) {
         //walking_velocity.mul(ppm);
         this.player.cc -= delta;
         if (this.player.cc <= 0) {
+            this.player.cc = 0;
             this.player.velocity.add(walking_velocity);
             this.player.sprite.flip = (this.player.moveDirection == -1);
         }
@@ -1033,6 +1078,7 @@ var MatchScene = (function (_super) {
                     if (obj instanceof Bot) {
                         pe = obj.blood_system;
                         obj.attacked(this.player.jpunch_damage());
+                        obj.cc += 3;
                         pe.velocity = new vec2([0, -5]);
                         pe.spawn_max = 15;
                         pe.position = obj.position.copy().add(obj.size.copy().mul(0.5 * ppm));
@@ -1094,7 +1140,7 @@ var MatchScene = (function (_super) {
                 var dp = this.player.position.copy().sub(bot.position);
                 dp.div(dp.length());
                 bot.velocity.sub(dp.mul(2));
-                bot.height_to_ground = bot.size.x * 1.4;
+                bot.height_to_ground = bot.size.x * 1.3;
                 this.opponents_dead++;
                 bot.dead = true;
                 this.last_dead = id;
@@ -1110,7 +1156,7 @@ var MatchScene = (function (_super) {
             pe.random_scale = 0.05;
             pe.scale_velocity = -0.1;
             pe.random_scale_velocity = 0.1;
-            pe.position = bot.position.copy().add(bot.size.copy().mul(0.5 * ppm));
+            pe.position = bot.position.copy().add(bot.size.copy().mul(0.5 * ppm).mul(new vec2([1, 0.5])));
             pe.spawn(time, delta);
             if (!slowmo) {
                 pe.velocity = new vec2([0, 0]);

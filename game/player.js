@@ -29,7 +29,7 @@ var combos = [
     [[ActionType.Turn, ActionType.Turn], ActionType.Jump, 0.5, combo_check_basic, "JUMP", 0],
     [[ActionType.BeginWalk, ActionType.BeginWalk, ActionType.BeginWalk], ActionType.Dash, 0.3, combo_check_basic, "DASH", 1],
     [[ActionType.BeginWalk, ActionType.Turn], ActionType.BasicPunch, 0.2, combo_check_basic, "FIST", 0],
-    [[ActionType.BasicPunch, ActionType.BasicPunch], ActionType.CirclePunch, 0.5, combo_check_basic, "ENERGY PUSH", 3],
+    [[ActionType.BasicPunch, ActionType.BasicPunch], ActionType.CirclePunch, 0.5, combo_check_basic, "ENERGY PUSH", 3.5],
     [[ActionType.Jump, ActionType.Jump, ActionType.Turn], ActionType.JumpPunch, 0.6, combo_check_jump, "CANNONBALL", 2],
 ];
 var combo_data = [
@@ -120,13 +120,13 @@ var Player = (function (_super) {
         this.blood_system.spawn(time, delta);
     };
     Player.prototype.bpunch_damage = function () {
-        return 5 + (Math.random() - 0.5) * 2;
+        return 4;
     };
     Player.prototype.cpunch_damage = function () {
-        return 10 + (Math.random() - 0.5) * 4;
+        return 7 + (Math.random() - 0.5) * 4;
     };
     Player.prototype.jpunch_damage = function () {
-        return 8 + (Math.random() - 0.5) * 8;
+        return 7 + (Math.random() - 0.5) * 8;
     };
     return Player;
 })(GameObject);

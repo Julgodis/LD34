@@ -30,7 +30,7 @@ class HP {
         this.update_sprite.color = new vec4([1, 1, 0.2, 1]);
         this.update_sprite.textures = [empty_texture];
 
-        this.name = new TextSprite(n, position.x, position.y - 30, 11, 100, 30, { center: false });
+        this.name = new TextSprite(n, position.x, position.y - 30, 11, 250, 30, { center: false });
         this.percent = new TextSprite("100.00%", position.x + width - 105, position.y - 30, 11, 85, 30, { center: false });
 
         context.passes[0].addSprite(this.name);
