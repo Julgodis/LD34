@@ -110,7 +110,7 @@ var ParticleEmitter = (function () {
             if (this.spawn_rate == 0)
                 return;
             if (this.spawn_rate < 0) {
-                for (var i = 0; i < this.spawn_max; i++) {
+                for (var i = 0; i < this.spawn_max * particle_setting; i++) {
                     this.spawn_particle(time, delta);
                 }
             }
