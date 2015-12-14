@@ -17,7 +17,7 @@ var Bot = (function (_super) {
         this.speed = 5.5;
         this.cc = 0;
         this.dead = false;
-        this.hp_start = 1;
+        this.hp_start = 100;
         this.blood_system = setup_blood_emitter();
         this.animation = new AnimationManager();
         this.animation_state = BotAnimationState.None;
@@ -87,6 +87,65 @@ var DummyBot = (function (_super) {
     };
     return DummyBot;
 })(Bot);
+var RandomBot = (function (_super) {
+    __extends(RandomBot, _super);
+    function RandomBot(position, size) {
+        _super.call(this, position, size);
+        this.dash = 0;
+        this.jump = 0;
+        this.attack = 0;
+        this.basic_punch_damage = 4;
+        this.basic_punch_damage_random = 1;
+        this.hp_start = 100;
+        this.speed = 10;
+        this.setup_attack_particles(new vec4([1, 0, 1, 1]));
+    }
+    RandomBot.prototype.update = function (time, delta, player) {
+        var hit = false;
+        var d = player.position.copy().sub(this.position);
+        this.moveDirection = (d.x > 0 ? 1 : (d.x < 0 ? -1 : this.moveDirection));
+        var distance = d.length();
+        this.dash -= delta;
+        this.jump -= delta;
+        this.attack -= delta;
+        this.cc -= delta;
+        if (this.cc > 0)
+            return hit;
+        if (this.cc < 0)
+            this.cc = 0;
+        if (distance < this.size.x * 0.45 * ppm) {
+            if (Math.random() < 0.3 && this.onGround && this.jump <= 0) {
+                this.velocity.add(new vec2([0, -5]));
+                this.jump = 8 + Math.random() * 2;
+            }
+            if (this.attack <= 0 && Math.random() > 0.8) {
+                this.animation_state = BotAnimationState.Fist;
+                this.animation.play_ifn("fist");
+                player.attacked(time, delta, this.basic_punch_damage + this.basic_punch_damage_random * (Math.random() - 0.5));
+                this.attack = 4;
+                hit = true;
+            }
+        }
+        else {
+            var speed = this.speed;
+            if (!this.onGround)
+                speed *= 0.4;
+            var direction = d.copy().div(distance).mul(speed);
+            if (distance > 100 * ppm && this.dash <= 0) {
+                this.velocity.x += 4800 * this.moveDirection;
+                this.velocity.y -= 0.5;
+                this.dash = 4 + Math.random();
+            }
+            this.velocity.add((new vec2([1, 0])).mul(direction).mul(delta));
+            if (Math.random() < 0.2 && this.onGround && this.jump <= 0) {
+                this.velocity.add(new vec2([0, -5]));
+                this.jump = 8 + Math.random() * 2;
+            }
+        }
+        return hit;
+    };
+    return RandomBot;
+})(Bot);
 var GodBot = (function (_super) {
     __extends(GodBot, _super);
     function GodBot(position, size) {
@@ -94,7 +153,7 @@ var GodBot = (function (_super) {
         this.dash = 0;
         this.jump = 0;
         this.attack = 0;
-        this.basic_punch_damage = 5;
+        this.basic_punch_damage = 7;
         this.basic_punch_damage_random = 3;
         this.hp_start = 100;
         this.speed = 10;
@@ -252,7 +311,7 @@ var JohnCenaBot = (function (_super) {
         if (distance < this.size.x * 0.45 * ppm) {
             if (Math.random() < 0.3 && this.onGround && this.jump <= 0) {
                 this.velocity.add(new vec2([0, -5]));
-                this.jump = 5 + Math.random() * 2;
+                this.jump = 3 + Math.random() * 1;
             }
             if (this.attack <= 0 && Math.random() > 0.8) {
                 this.animation_state = BotAnimationState.Fist;
@@ -284,7 +343,7 @@ var JohnCenaBot = (function (_super) {
             this.velocity.add((new vec2([1, 0])).mul(direction).mul(delta));
             if (Math.random() < 0.2 && this.onGround && this.jump <= 0) {
                 this.velocity.add(new vec2([0, -5]));
-                this.jump = 2 + Math.random() * 2;
+                this.jump = 2 + Math.random() * 1;
             }
         }
         return hit;

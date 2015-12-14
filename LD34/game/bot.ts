@@ -18,7 +18,7 @@ class Bot extends GameObject {
 
     animation: AnimationManager;
     animation_state: BotAnimationState;
-    hp_start: number = 1;
+    hp_start: number = 100;
 
     constructor(position: vec2, size: vec2) {
         super(position, size);
@@ -105,12 +105,83 @@ class DummyBot extends Bot {
     }
 }
 
+class RandomBot extends Bot {
+    dash: number = 0;
+    jump: number = 0;
+    attack: number = 0;
+
+    basic_punch_damage: number = 4;
+    basic_punch_damage_random: number = 1;
+
+    constructor(position: vec2, size: vec2) {
+        super(position, size);
+
+        this.hp_start = 100;
+        this.speed = 10;
+        this.setup_attack_particles(new vec4([1, 0, 1, 1]));
+    }
+
+    update(time: number, delta: number, player: Player): boolean {
+        var hit = false;
+        var d = player.position.copy().sub(this.position);
+        this.moveDirection = (d.x > 0 ? 1 : (d.x < 0 ? -1 : this.moveDirection));
+
+        var distance = d.length();
+
+        this.dash -= delta;
+        this.jump -= delta;
+        this.attack -= delta;
+        this.cc -= delta;
+
+        if (this.cc > 0) return hit;
+        if (this.cc < 0) this.cc = 0;
+
+        if (distance < this.size.x * 0.45 * ppm) {
+            if (Math.random() < 0.3 && this.onGround && this.jump <= 0) {
+                this.velocity.add(new vec2([0, -5]));
+                this.jump = 8 + Math.random() * 2;
+            }
+
+            if (this.attack <= 0 && Math.random() > 0.8) {
+                this.animation_state = BotAnimationState.Fist;
+                this.animation.play_ifn("fist");
+                player.attacked(time, delta, this.basic_punch_damage + this.basic_punch_damage_random * (Math.random() - 0.5));
+                this.attack = 4;
+                hit = true;
+            }
+
+        } else {
+            var speed = this.speed;
+            if (!this.onGround)
+                speed *= 0.4;
+
+            var direction = d.copy().div(distance).mul(speed);
+            if (distance > 100 * ppm && this.dash <= 0) {
+                this.velocity.x += 4800 * this.moveDirection;
+                this.velocity.y -= 0.5;
+                this.dash = 4 + Math.random();
+            }
+
+            this.velocity.add((new vec2([1, 0])).mul(direction).mul(delta));
+
+            if (Math.random() < 0.2 && this.onGround && this.jump <= 0) {
+                this.velocity.add(new vec2([0, -5]));
+                this.jump = 8 + Math.random() * 2;
+            }
+        }
+
+        return hit;
+    }
+}
+
+
+
 class GodBot extends Bot {
     dash: number = 0;
     jump: number = 0;
     attack: number = 0;
 
-    basic_punch_damage: number = 5;
+    basic_punch_damage: number = 7;
     basic_punch_damage_random: number = 3;
 
     constructor(position: vec2, size: vec2) {
@@ -298,7 +369,7 @@ class JohnCenaBot extends Bot {
         if (distance < this.size.x * 0.45 * ppm) {
             if (Math.random() < 0.3 && this.onGround && this.jump <= 0) {
                 this.velocity.add(new vec2([0, -5]));
-                this.jump = 5 + Math.random() * 2;
+                this.jump = 3 + Math.random() * 1;
             }
 
             if (this.attack <= 0 && Math.random() > 0.8) {
@@ -335,7 +406,7 @@ class JohnCenaBot extends Bot {
 
             if (Math.random() < 0.2 && this.onGround && this.jump <= 0) {
                 this.velocity.add(new vec2([0, -5]));
-                this.jump = 2 + Math.random() * 2;
+                this.jump = 2 + Math.random() * 1;
             }
         }
 

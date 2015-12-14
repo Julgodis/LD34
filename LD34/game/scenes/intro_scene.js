@@ -22,7 +22,7 @@ var IntroScene = (function (_super) {
         this.overlay_sprite.color = new vec4([0.0, 0.0, 0.0, 0.4]);
         this.overlay_sprite.textures = [empty_texture];
         context.passes[0].addSprite(this.overlay_sprite);
-        this.title_text = new TextSprite("Game", 500 / 1.8, 250, 101, 400, 80, { font: "60px monospace" });
+        this.title_text = new TextSprite("2Fight", 500 / 1.8, 250, 101, 400, 80, { font: "60px monospace" });
         this.title_text.width = 200;
         this.title_text.height = 40;
         context.passes[0].addSprite(this.title_text);
@@ -67,6 +67,13 @@ var IntroScene = (function (_super) {
         for (var i = 0; i < 15; i++) {
             this.add_tree(new vec2([(900 / 15) * i + (Math.random() - 0.5) * 10, world.w * mpp]), 5 + Math.random() * 5);
         }
+        this.sound_sprite = new Sprite(230, 534, 1000, 32, 32);
+        if (Sound.isOff)
+            this.sound_sprite.texCoords = new vec4([0.5, 0, 0.5, 1.0]);
+        else
+            this.sound_sprite.texCoords = new vec4([0, 0, 0.5, 1.0]);
+        this.sound_sprite.textures = [data.textures["sound_button"].texture];
+        context.passes[0].addSprite(this.sound_sprite);
         this.spawn_player();
     };
     IntroScene.prototype.add_tree = function (position, scale) {
@@ -109,6 +116,7 @@ var IntroScene = (function (_super) {
         this.ld_text1.remove();
         this.ld_text2.remove();
         this.copy_text.remove();
+        this.sound_sprite.remove();
     };
     IntroScene.prototype.update = function (time, delta) {
         camera_zoom = 1.8;
@@ -136,7 +144,7 @@ var IntroScene = (function (_super) {
             data.sounds["select"].sound.play();
             this.cleanup();
             var matchscene = new MatchScene();
-            matchscene.match_id = MatchID.Level4;
+            matchscene.match_id = MatchID.Tutorial;
             matchscene.setup();
             current_scene = matchscene;
             mouse.leftDown = false;
@@ -144,6 +152,27 @@ var IntroScene = (function (_super) {
         if (mouse.leftDown && this.rate_button.inside(mouse_position)) {
             data.sounds["select"].sound.play();
             OpenInNewTabRate();
+            mouse.leftDown = false;
+        }
+        var sound_inside = true;
+        sound_inside = sound_inside && (mouse_position.x >= this.sound_sprite.x && mouse_position.x <= this.sound_sprite.x + this.sound_sprite.width);
+        sound_inside = sound_inside && (mouse_position.y >= this.sound_sprite.y && mouse_position.y <= this.sound_sprite.y + this.sound_sprite.height);
+        if (mouse.leftDown && sound_inside) {
+            if (Sound.isOff == false) {
+                Sound.Off();
+                Music.Off();
+                data.music["music"].music.stop();
+            }
+            else {
+                Sound.On();
+                Music.On();
+                data.music["music"].music.play();
+            }
+            data.sounds["select"].sound.play();
+            if (Sound.isOff)
+                this.sound_sprite.texCoords = new vec4([0.5, 0, 0.5, 1.0]);
+            else
+                this.sound_sprite.texCoords = new vec4([0, 0, 0.5, 1.0]);
             mouse.leftDown = false;
         }
         this.player.animation.update(time, delta);

@@ -73,7 +73,8 @@ enum MatchID {
     Level1,
     Level2,
     Level3,
-    Level4
+    Level4,
+    Level5
 }
 
 class MatchScene extends Scene {
@@ -93,6 +94,7 @@ class MatchScene extends Scene {
 
     match_state: MatchState;
     match_id: MatchID;
+    match_start: number;
 
     a_button_sprite: Sprite;
     b_button_sprite: Sprite;
@@ -105,7 +107,8 @@ class MatchScene extends Scene {
     // winning
     win_next_match: ButtonSprite;
     win_title: TextSprite;
-    win_text: TextSprite;
+    win_text1: TextSprite;
+    win_text2: TextSprite;
 
     // lossing
     lose_re_match: ButtonSprite;
@@ -130,6 +133,8 @@ class MatchScene extends Scene {
     tut_text_bpunch: TextSprite;
     tut_text_cpunch: TextSprite;
     tut_text_jpunch: TextSprite;
+
+    sound_sprite: Sprite;
 
     constructor() {
         super();
@@ -263,6 +268,15 @@ class MatchScene extends Scene {
         this.b_button_sprite.texCoords = new vec4([0, 0, 0.5, 1]);
         this.b_button_sprite.textures = [data.textures["b_button"].texture];
         context.passes[0].addSprite(this.b_button_sprite);
+
+        this.sound_sprite = new Sprite(820, 530, 1000, 64, 64);
+        if (Sound.isOff)
+            this.sound_sprite.texCoords = new vec4([0.5, 0, 0.5, 1.0]);
+        else
+            this.sound_sprite.texCoords = new vec4([0, 0, 0.5, 1.0]);
+        this.sound_sprite.textures = [data.textures["sound_button"].texture];
+        context.passes[0].addSprite(this.sound_sprite);
+
     }
 
     add_tree(position: vec2, scale: number) {        
@@ -432,12 +446,14 @@ class MatchScene extends Scene {
             context.passes[0].addSprite(this.tut_text_jpunch);
 
         } else if (this.match_id == MatchID.Level1) {
-            this.spawn_bot("Idiot", "tutorial_spritesheet", DummyBot);
+            this.spawn_bot("Box Man", "tutorial_spritesheet", DummyBot);
         } else if (this.match_id == MatchID.Level2) {
+            this.spawn_bot("Random Dude", "random_spritesheet", RandomBot);
+        }else if (this.match_id == MatchID.Level3) {
             this.spawn_bot("God", "god_spritesheet", GodBot);
-        } else if (this.match_id == MatchID.Level3) {
-            this.spawn_bot("Chuck Norris", "chuck_norris_spritesheet", ChunkNorrisBot);
         } else if (this.match_id == MatchID.Level4) {
+            this.spawn_bot("Chuck Norris", "chuck_norris_spritesheet", ChunkNorrisBot);
+        } else if (this.match_id == MatchID.Level5) {
             this.spawn_bot("John Cena", "john_cena_spritesheet", JohnCenaBot);
         }
     }
@@ -487,8 +503,10 @@ class MatchScene extends Scene {
             this.menu_board.remove();
         if (this.win_next_match != null)
             this.win_next_match.cleanup();
-        if (this.win_text != null)
-            this.win_text.remove();
+        if (this.win_text1 != null)
+            this.win_text1.remove();
+        if (this.win_text2 != null)
+            this.win_text2.remove();
         if (this.win_title != null)
             this.win_title.remove();
 
@@ -511,6 +529,8 @@ class MatchScene extends Scene {
             this.tut_text_cpunch.remove();
             this.tut_text_jpunch.remove();
         }
+
+        this.sound_sprite.remove();
     }
 
     add_player(player: Player) {
@@ -537,8 +557,37 @@ class MatchScene extends Scene {
     }
 
     update(time: number, delta: number) {
-        if (this.match_state == MatchState.Loading)
+
+        var sound_inside = true;
+        sound_inside = sound_inside && (mouse.position.x >= this.sound_sprite.x && mouse.position.x <= this.sound_sprite.x + this.sound_sprite.width);
+        sound_inside = sound_inside && (mouse.position.y >= this.sound_sprite.y && mouse.position.y <= this.sound_sprite.y + this.sound_sprite.height);
+        if (mouse.leftDown && sound_inside) {
+            if (Sound.isOff == false) {
+                Sound.Off();
+                Music.Off();
+
+                data.music["music"].music.stop();
+
+            } else {
+                Sound.On();
+                Music.On();
+
+                data.music["music"].music.play();
+            }
+
+            data.sounds["select"].sound.play();
+            if (Sound.isOff)
+                this.sound_sprite.texCoords = new vec4([0.5, 0, 0.5, 1.0]);
+            else
+                this.sound_sprite.texCoords = new vec4([0, 0, 0.5, 1.0]);
+            mouse.leftDown = false;
+        }
+
+
+        if (this.match_state == MatchState.Loading) {
             this.match_state = MatchState.Inprogress;
+            this.match_start = new Date().getTime();
+        }
 
         for (var index in repeats) {
             var rep = repeats[index];
@@ -584,6 +633,12 @@ class MatchScene extends Scene {
             this.finish = true;
             this.camera_pos = this.player.position.copy().add(this.player.size.copy().mul(0.5 * ppm)).mul(mpp);
 
+            var t = ((new Date().getTime() - this.match_start) / 1000);
+            var time_bonus = 150 - (t * 10) / 2.5;
+            if (time_bonus < 0)
+                time_bonus = 0;
+
+            game_score += (1 + this.match_id/10) * ((this.player.hp.current_hp / this.player.hp.max_hp) * 100 + this.opponents_dead * 50 + time_bonus);
             this.match_state = MatchState.Won;
 
             this.player.hp.hide();
@@ -611,13 +666,22 @@ class MatchScene extends Scene {
             setTimeout(() => {
                 this.setup_menu();
 
-                this.win_title = new TextSprite("You won!", 450 - 100, 180, 1001, 220, 60,
+                this.win_title = new TextSprite("Victory", 450 - 100, 150, 1001, 220, 60,
                     {
                         font: "46px monospace"
                     });
 
-                if (this.match_id == MatchID.Level4) {
-                    this.win_next_match = new ButtonSprite("Rate", 450 - 250*0.5, 350, 1001, 250, 50);
+                if (this.match_id == MatchID.Level5) {
+                    this.win_text1 = new TextSprite("Thank you for playing.", 450 - 250 * 0.5, 220, 1001, 250, 50, {
+                        font: "16px monospace"
+                    });
+                    this.win_text2 = new TextSprite("score: " + parseFloat("" + game_score).toFixed(2), 450 - 250 * 0.5, 240, 1001, 250, 50, {
+                        font: "16px monospace"
+                    });
+                    context.passes[0].addSprite(this.win_text1);
+                    context.passes[0].addSprite(this.win_text2);
+
+                    this.win_next_match = new ButtonSprite("Rate", 450 - 250 * 0.5, 350, 1001, 250, 50);
                 } else {
                     this.win_next_match = new ButtonSprite("Next Fight", 450 - 100, 350, 1001, 200, 50);
                 }
@@ -666,33 +730,22 @@ class MatchScene extends Scene {
             for (var index in this.combo_cd_sprites) {
                 this.combo_cd_sprites[index].enabled = false;
             }
-           /* setTimeout(() => {
-                this.setup_menu();
-
-                this.win_title = new TextSprite("You won!", 450 - 100, 150, 1001, 200, 60,
-                    {
-                        stroke: true,
-                        stroke_width: 1,
-                        font: "46px monospace"
-                    });
-                this.win_next_match = new ButtonSprite("Next match", 450 - 100, 375, 1001, 200, 50);
-                this.win_next_match.textures = [empty_texture];
-                this.win_next_match.color = new vec4([0, 0, 1, 1]);
-
-                context.passes[0].addSprite(this.win_title);
-                context.passes[0].addSprite(this.win_next_match);
-                context.passes[0].addSprite(this.win_next_match.text);
-            }, 8500);*/
 
             setTimeout(() => {
                 this.setup_menu();
 
-                this.lose_title = new TextSprite("Game over", 450 - 250*0.5, 180, 1001, 250, 60,
+                this.lose_title = new TextSprite("Game over", 450 - 250*0.5, 150, 1001, 250, 60,
                     {
                         font: "46px monospace"
                     });
 
-                this.lose_rate = new ButtonSprite("Rate", 450 - 100, 280, 1001, 200, 50);
+                this.lose_text = new TextSprite("score: "+parseFloat(""+game_score).toFixed(2), 450 - 250 * 0.5, 220, 1001, 250, 50, {
+                    font: "16px monospace"
+                });
+                context.passes[0].addSprite(this.lose_text);
+
+
+                this.lose_rate = new ButtonSprite("Rate", 450 - 100, 290, 1001, 200, 50);
                 this.lose_rate.textures = [data.textures["button"].texture];
                 this.lose_rate.color = new vec4([0, 0, 1, 1]);
 
@@ -836,7 +889,7 @@ class MatchScene extends Scene {
 
         if (this.match_state == MatchState.Lose) {
             if (!this.player.dead) {
-                this.player.height_to_ground = this.player.size.x * 1.2;
+                this.player.height_to_ground = this.player.size.x * 1.3;
                 this.player.dead = true;
             } else {
                 var rotation = this.player.sprite.rotation;
@@ -1289,7 +1342,7 @@ class MatchScene extends Scene {
                 dp.div(dp.length());
                 bot.velocity.sub(dp.mul(2));
 
-                bot.height_to_ground = bot.size.x * 1.2;
+                bot.height_to_ground = bot.size.x * 1.3;
                
                 this.opponents_dead++;
                 bot.dead = true;
@@ -1307,7 +1360,7 @@ class MatchScene extends Scene {
             pe.random_scale = 0.05;
             pe.scale_velocity = -0.1;
             pe.random_scale_velocity = 0.1;
-            pe.position = bot.position.copy().add(bot.size.copy().mul(0.5 * ppm));
+            pe.position = bot.position.copy().add(bot.size.copy().mul(0.5 * ppm).mul(new vec2([1, 0.5])));
             pe.spawn(time, delta);
 
 
